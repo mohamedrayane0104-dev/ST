@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: skilltrack
+      POSTGRES_PASSWORD: skilltrack
+      POSTGRES_DB: skilltrack_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/skilltrack_db
+      SPRING_DATASOURCE_USERNAME: skilltrack
+      SPRING_DATASOURCE_PASSWORD: skilltrack
+      JWT_SECRET: change_this_secret
+      APP_BASE_URL: http://localhost:8080
+      SMTP_HOST: smtp.mailtrap.io
+      SMTP_PORT: 2525
+      SMTP_USER: your_mailtrap_user
+      SMTP_PASS: your_mailtrap_pass
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      REACT_APP_API_URL: http://localhost:8080
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:
