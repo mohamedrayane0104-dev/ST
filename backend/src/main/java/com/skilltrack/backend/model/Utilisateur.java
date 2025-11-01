@@ -28,6 +28,7 @@ public class Utilisateur {
     private Integer niveau = 1;
     private Integer total_points = 0;
     private LocalDateTime date_inscription = LocalDateTime.now();
+    private Boolean emailVerified = false;
 
     @OneToMany(mappedBy = "utilisateur", cascade = CascadeType.ALL)
     private List<Objectif> objectifs;

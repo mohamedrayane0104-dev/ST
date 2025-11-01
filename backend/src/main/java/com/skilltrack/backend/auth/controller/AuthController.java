@@ -22,4 +22,19 @@ public class AuthController {
     public ResponseEntity<String> login(@RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
+
+    @GetMapping("/verify-email")
+    public ResponseEntity<String> verifyEmail(@RequestParam("token") String token) {
+        // ✅ La méthode verifyEmail() renvoie un message texte maintenant
+        String resultMessage = authService.verifyEmail(token);
+
+        // Page HTML de retour conviviale
+        return ResponseEntity.ok()
+                .header("Content-Type", "text/html; charset=UTF-8")
+                .body("<!DOCTYPE html><html><body style='font-family:sans-serif;text-align:center;margin-top:50px;'>"
+                        + "<h2 style='color:#1976d2;'>" + resultMessage + "</h2>"
+                        + "<br><a href='http://localhost:3000' "
+                        + "style='color:#1976d2;text-decoration:none;font-weight:bold;'>Revenir à SkillTrack</a>"
+                        + "</body></html>");
+    }
 }

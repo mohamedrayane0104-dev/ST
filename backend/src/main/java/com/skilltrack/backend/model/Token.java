@@ -1,22 +1,26 @@
 package com.skilltrack.backend.model;
 
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Token {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long idToken;
+    private Long id;
 
-    private String type;
-    private String tokenHash;
+    private String token;
     private LocalDateTime expiration;
-    private Boolean used = false;
+    private boolean used = false;
 
     @ManyToOne
     @JoinColumn(name = "id_user")
     private Utilisateur utilisateur;
-
-    // Getters et Setters
 }

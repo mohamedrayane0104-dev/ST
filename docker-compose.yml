@@ -17,17 +17,38 @@ services:
     depends_on:
       - db
     environment:
+      # === Database ===
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/skilltrack_db
       SPRING_DATASOURCE_USERNAME: skilltrack
       SPRING_DATASOURCE_PASSWORD: skilltrack
-      JWT_SECRET: change_this_secret
+
+      # === Mailtrap (dev only) ===
+      SPRING_MAIL_HOST: smtp.mailtrap.io
+      SPRING_MAIL_PORT: 2525
+      SPRING_MAIL_USERNAME: 303e212c2008d8
+      SPRING_MAIL_PASSWORD: 449e25e057bfc3
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: "true"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: "true"
+      SPRING_MAIL_DEFAULT_ENCODING: UTF-8
+      SPRING_MAIL_FROM: "SkillTrack <no-reply@skilltrack.app>"
+
+      # === JWT ===
+      JWT_SECRET: ma_super_cle_ultra_secrete
+      JWT_EXPIRATION: 604800000
+
+      # === Application ===
+      SPRING_APPLICATION_NAME: skilltrack-backend
+      SERVER_PORT: 8080
       APP_BASE_URL: http://localhost:8080
-      SMTP_HOST: smtp.mailtrap.io
-      SMTP_PORT: 2525
-      SMTP_USER: your_mailtrap_user
-      SMTP_PASS: your_mailtrap_pass
+
     ports:
       - "8080:8080"
+    # Optionnel : permet d’attendre que la DB soit disponible
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h db -U skilltrack"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   frontend:
     build: ./frontend
