@@ -1,0 +1,6 @@
+Check container with : docker ps
+Then import with :
+docker exec -i skilltrack-db-1 psql -U skilltrack -d skilltrack_db < ./backup/skilltrack_db.sql
+
+for export :
+docker exec -t skilltrack-db-1 pg_dump -U skilltrack skilltrack_db > ./backup/skilltrack_db.sql
