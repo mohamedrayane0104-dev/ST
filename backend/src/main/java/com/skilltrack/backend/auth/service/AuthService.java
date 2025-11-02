@@ -11,6 +11,7 @@ import com.skilltrack.backend.service.MailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -18,6 +19,7 @@ import java.util.Base64;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class AuthService {
 
     private final UtilisateurRepository utilisateurRepository;
@@ -103,8 +105,26 @@ public class AuthService {
             throw new RuntimeException("⚠️ Votre compte n’est pas encore vérifié. Veuillez consulter votre e-mail.");
         }
 
-        return jwtService.generateToken(user.getEmail());
+        // 🔹 1. Génération du JWT
+        String jwt = jwtService.generateToken(user.getEmail());
+
+        // 🔹 2. (Optionnel) Invalider les anciens tokens de cet utilisateur
+        tokenRepository.deleteByUtilisateur(user);
+
+        // 🔹 3. Sauvegarder le nouveau token JWT dans la table
+        Token token = Token.builder()
+                .token(jwt)
+                .expiration(LocalDateTime.now().plusHours(24))
+                .used(false)
+                .utilisateur(user)
+                .build();
+
+        tokenRepository.save(token);
+
+        // 🔹 4. Retourner le JWT au frontend
+        return jwt;
     }
+
 
     /**
      * 🔹 Génération d’un token de vérification sécurisé (base64)
@@ -113,5 +133,12 @@ public class AuthService {
         byte[] randomBytes = new byte[32];
         new SecureRandom().nextBytes(randomBytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+    }
+    // Méthode logout pour déconnexion
+    public void logout(String jwtToken) {
+        tokenRepository.findByToken(jwtToken).ifPresent(token -> {
+            token.setUsed(true); // ou tokenRepository.delete(token);
+            tokenRepository.save(token);
+        });
     }
 }

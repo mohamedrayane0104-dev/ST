@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 @Getter
@@ -43,6 +44,7 @@ public class Utilisateur {
     private List<RecompenseAssignation> recompenses;
 
     @OneToMany(mappedBy = "utilisateur", cascade = CascadeType.ALL)
+    @JsonManagedReference
     private List<Token> tokens;
 
     @OneToMany(mappedBy = "utilisateur", cascade = CascadeType.ALL)

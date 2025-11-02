@@ -2,6 +2,7 @@ package com.skilltrack.backend.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import java.time.LocalDateTime;
 
@@ -22,5 +23,6 @@ public class Token {
 
     @ManyToOne
     @JoinColumn(name = "id_user")
+    @JsonBackReference
     private Utilisateur utilisateur;
 }
