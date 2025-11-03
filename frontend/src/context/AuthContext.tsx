@@ -3,7 +3,11 @@ import axios from 'axios';
 import Loader from '../components/Loader';
 
 interface User {
+  nom: string;
+  prenom: string;
+  niveau: string;
   email: string;
+  total_points: number;
 }
 
 interface AuthContextType {
@@ -41,10 +45,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     verifyToken();
   }, [token]);
 
-  // ✅ LOGIN : récupère correctement le token depuis res.data.token
+  // ✅ LOGIN : récupère le token depuis res.data.token
   const login = async (email: string, password: string) => {
     const res = await axios.post('http://localhost:8080/auth/login', { email, motDePasse: password });
-    const token = res.data?.token; // ✅ Extraction correcte
+    const token = res.data?.token;
     if (!token) throw new Error("Token JWT manquant dans la réponse du serveur");
 
     localStorage.setItem('token', token);
@@ -57,12 +61,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(profileRes.data);
   };
 
-  // ✅ REGISTER (inchangé)
+  // ✅ REGISTER
   const register = async (nom: string, prenom: string, email: string, motDePasse: string) => {
     await axios.post('http://localhost:8080/auth/register', { nom, prenom, email, motDePasse });
   };
 
-  // ✅ LOGOUT (conserve le token s’il est valide)
+  // ✅ LOGOUT
   const logout = async () => {
     if (token) {
       try {

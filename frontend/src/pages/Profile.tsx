@@ -1,5 +1,6 @@
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import './Profile.css';
 
 export default function Profile() {
   const { user, logout } = useAuth();
@@ -11,17 +12,38 @@ export default function Profile() {
   };
 
   return (
-    <div className="p-4 text-center">
-      <h1 className="text-2xl font-bold mb-4">Profil</h1>
+    <div className="profile-container">
       {user ? (
-        <>
-          <p>Email : {user.email}</p>
-          <button onClick={handleLogout} className="bg-red-500 text-white px-4 py-2 mt-3 rounded">
+        <div className="profile-card">
+          <h1 className="profile-title">Mon Profil</h1>
+          <div className="profile-info">
+            <div className="profile-field">
+              <span className="label">Nom :</span>
+              <span className="value">{user.nom}</span>
+            </div>
+            <div className="profile-field">
+              <span className="label">Prénom :</span>
+              <span className="value">{user.prenom}</span>
+            </div>
+            <div className="profile-field">
+              <span className="label">Niveau :</span>
+              <span className="value">{user.niveau}</span>
+            </div>
+            <div className="profile-field">
+              <span className="label">Email :</span>
+              <span className="value">{user.email}</span>
+            </div>
+            <div className="profile-field">
+              <span className="label">Total Points :</span>
+              <span className="value">{user.total_points}</span>
+            </div>
+          </div>
+          <button onClick={handleLogout} className="logout-btn">
             Se déconnecter
           </button>
-        </>
+        </div>
       ) : (
-        <p>Chargement...</p>
+        <p className="loading-text">Chargement du profil...</p>
       )}
     </div>
   );
