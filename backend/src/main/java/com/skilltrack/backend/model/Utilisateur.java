@@ -25,10 +25,13 @@ public class Utilisateur {
 
     @Column(nullable = false)
     private String mot_de_passe;
-
+    @Builder.Default
     private Integer niveau = 1;
+    @Builder.Default
     private Integer total_points = 0;
+    @Builder.Default
     private LocalDateTime date_inscription = LocalDateTime.now();
+    @Builder.Default
     private Boolean emailVerified = false;
 
     @OneToMany(mappedBy = "utilisateur", cascade = CascadeType.ALL)
@@ -52,5 +55,11 @@ public class Utilisateur {
 
     @OneToMany(mappedBy = "utilisateur", cascade = CascadeType.ALL)
     private List<LoginHistory> loginHistory;
-
+    @PrePersist
+    public void prePersist() {
+        if (niveau == null) niveau = 1;
+        if (total_points == null) total_points = 0;
+        if (date_inscription == null) date_inscription = LocalDateTime.now();
+        if (emailVerified == null) emailVerified = false;
+    }
 }
