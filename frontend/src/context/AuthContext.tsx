@@ -14,6 +14,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   loading: boolean;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>; // <-- ajouté
   login: (email: string, password: string) => Promise<void>;
   register: (nom: string, prenom: string, email: string, motDePasse: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -26,26 +27,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [loading, setLoading] = useState<boolean>(true);
 
-  // ✅ Vérifie le token et récupère le profil
+  // Vérifie le token et récupère le profil
   useEffect(() => {
     const verifyToken = async () => {
-      if (token) {
-        try {
-          const res = await axios.get('http://localhost:8080/auth/profile', {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          setUser(res.data);
-        } catch (err) {
-          console.warn("Token invalide, suppression du token...");
-          await logout();
-        }
+      if (!token) {
+        setLoading(false);
+        return;
       }
-      setLoading(false);
+
+      try {
+        const res = await axios.get('http://localhost:8080/user/profile', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUser(res.data);
+      } catch (err: any) {
+        if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+          console.warn("Token invalide ou expiré, suppression du token...");
+          await logout();
+        } else {
+          console.error("Erreur serveur inattendue lors de la récupération du profil", err);
+        }
+      } finally {
+        setLoading(false);
+      }
     };
+
     verifyToken();
   }, [token]);
 
-  // ✅ LOGIN : récupère le token depuis res.data.token
+  // LOGIN
   const login = async (email: string, password: string) => {
     const res = await axios.post('http://localhost:8080/auth/login', { email, motDePasse: password });
     const token = res.data?.token;
@@ -54,19 +64,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('token', token);
     setToken(token);
 
-    // Charger le profil immédiatement après login
-    const profileRes = await axios.get('http://localhost:8080/auth/profile', {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setUser(profileRes.data);
+    try {
+      const profileRes = await axios.get('http://localhost:8080/user/profile', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUser(profileRes.data);
+    } catch (err: any) {
+      console.error("Impossible de récupérer le profil après login", err);
+    }
   };
 
-  // ✅ REGISTER
+  // REGISTER
   const register = async (nom: string, prenom: string, email: string, motDePasse: string) => {
     await axios.post('http://localhost:8080/auth/register', { nom, prenom, email, motDePasse });
   };
 
-  // ✅ LOGOUT
+  // LOGOUT
   const logout = async () => {
     if (token) {
       try {
@@ -76,7 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } catch {
-        console.warn('Erreur lors du logout');
+        console.warn('Erreur lors du logout, suppression locale du token');
       }
     }
     localStorage.removeItem('token');
@@ -87,7 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   if (loading) return <Loader />;
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, setUser, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

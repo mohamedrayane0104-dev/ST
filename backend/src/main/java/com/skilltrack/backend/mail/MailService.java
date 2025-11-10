@@ -89,4 +89,45 @@ public class MailService {
             throw new RuntimeException("Erreur lors de l'envoi de l'email : " + e.getMessage());
         }
     }
+    public void sendDeleteConfirmationEmail(String to, String prenom, String token) {
+        try {
+            String confirmUrl = "http://localhost:8080/user/confirm-delete?token=" + token;
+
+            String htmlContent = """
+            <html>
+                <head>
+                    <style>
+                        body {font-family: Arial, sans-serif; background-color: #f4f4f4; text-align: center; padding: 40px;}
+                        .container {background-color: #fff; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: inline-block; padding: 30px; max-width: 500px;}
+                        .btn {display: inline-block; background-color: #d9534f; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 20px; font-weight: bold;}
+                        .footer {margin-top: 30px; font-size: 12px; color: #777;}
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <h2>Confirmation de suppression de compte ⚠️</h2>
+                        <p>Bonjour <strong>%s</strong>,</p>
+                        <p>Vous avez demandé à supprimer votre compte SkillTrack.</p>
+                        <p>⚠️ Cette action est irréversible.</p>
+                        <p>Cliquez sur le bouton ci-dessous pour confirmer la suppression :</p>
+                        <a href="%s" class="btn">Confirmer la suppression</a>
+                        <p class="footer">Ce lien expirera dans 1 heure.<br/>Si vous n'avez pas fait cette demande, ignorez cet e-mail.</p>
+                    </div>
+                </body>
+            </html>
+        """.formatted(prenom, confirmUrl);
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom("no-reply@skilltrack.com");
+            helper.setTo(to);
+            helper.setSubject("Confirmation de suppression de compte SkillTrack");
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+
+        } catch (MessagingException e) {
+            throw new RuntimeException("Erreur lors de l'envoi de l'email : " + e.getMessage());
+        }
+    }
 }

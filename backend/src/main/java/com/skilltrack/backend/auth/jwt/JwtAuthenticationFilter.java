@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Component
@@ -29,44 +30,49 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+                                    FilterChain filterChain)
+            throws ServletException, IOException {
 
         final String authHeader = request.getHeader("Authorization");
-        final String jwt;
+
+        // Pas de token → laisser Spring gérer (renverra 401)
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        jwt = authHeader.substring(7); // Supprimer "Bearer "
-        Optional<Token> storedTokenOpt = tokenRepository.findByToken(jwt);
+        final String jwt = authHeader.substring(7);
 
+        // Vérifier en base si token existe
+        Optional<Token> storedTokenOpt = tokenRepository.findByToken(jwt);
         if (storedTokenOpt.isEmpty()) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Token non trouvé ou déjà invalidé");
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token non trouvé");
             return;
         }
 
         Token storedToken = storedTokenOpt.get();
 
-        // Vérifie si le token est expiré ou déjà utilisé
-        if (storedToken.isUsed() || storedToken.getExpiration().isBefore(java.time.LocalDateTime.now())) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Token expiré ou invalidé");
+        // Vérifier expiration ou token déjà utilisé
+        if (storedToken.isUsed() || storedToken.getExpiration().isBefore(LocalDateTime.now())) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token expiré ou invalidé");
             return;
         }
 
-        // Vérifie la validité JWT (signature, etc.)
+        // Vérifier signature JWT
         if (!jwtService.isTokenValid(jwt)) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Token invalide");
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token invalide");
             return;
         }
 
-        // Authentifier l'utilisateur (sans créer de UserDetails)
+        // Authentifier l’utilisateur
+        var utilisateur = storedToken.getUtilisateur();
+
         UsernamePasswordAuthenticationToken authToken =
                 new UsernamePasswordAuthenticationToken(
-                        storedToken.getUtilisateur(), null, null);
+                        utilisateur,
+                        null,
+                        utilisateur.getAuthorities()
+                );
 
         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authToken);

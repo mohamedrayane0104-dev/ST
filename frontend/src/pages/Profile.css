@@ -66,22 +66,75 @@ body {
   color: #111827;
 }
 
-.logout-btn {
-  background-color: #444aef;
-  color: white;
+/* Style pour les inputs en mode édition */
+.profile-field input {
+  width: 60%;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  font-size: 15px;
+  font-weight: 500;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.profile-field input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 3px rgba(37, 99, 235, 0.5);
+}
+
+/* === Mode édition visuel === */
+.profile-field.edit-mode input {
+  background-color: #e0f2fe; /* léger bleu pour indiquer édition */
+  border: 2px solid #2563eb;
+  box-shadow: 0 0 5px rgba(37, 99, 235, 0.4);
+}
+
+
+.logout-btn,
+.delete-btn,
+.profile-card button {
   border: none;
   border-radius: 8px;
   padding: 12px 16px;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  margin-top: 25px;
-  transition: background-color 0.2s ease, transform 0.2s ease;
   width: 100%;
+  margin-top: 12px;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+/* Bouton logout */
+.logout-btn {
+  background-color: #444aef;
+  color: white;
 }
 
 .logout-btn:hover {
   background-color: #4700fa;
+  transform: scale(1.02);
+}
+
+/* Bouton supprimer */
+.delete-btn {
+  background-color: #ef4444;
+  color: white;
+}
+
+.delete-btn:hover {
+  background-color: #fa0000;
+  transform: scale(1.02);
+}
+
+/* Bouton sauvegarder / modifier */
+.profile-card button {
+  background-color: #2563eb;
+  color: white;
+}
+
+.profile-card button:hover {
+  background-color: #1e40af;
   transform: scale(1.02);
 }
 
@@ -107,5 +160,9 @@ body {
   .profile-card {
     width: 90%;
     padding: 30px;
+  }
+
+  .profile-field input {
+    width: 55%;
   }
 }

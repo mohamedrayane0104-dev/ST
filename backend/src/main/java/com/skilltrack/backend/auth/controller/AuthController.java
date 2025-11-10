@@ -3,24 +3,29 @@ package com.skilltrack.backend.auth.controller;
 import com.skilltrack.backend.auth.dto.LoginRequest;
 import com.skilltrack.backend.auth.dto.RegisterRequest;
 import com.skilltrack.backend.auth.service.AuthService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import com.skilltrack.backend.auth.jwt.JwtService;
 import com.skilltrack.backend.model.Utilisateur;
+import com.skilltrack.backend.model.Token;
 import com.skilltrack.backend.repository.UtilisateurRepository;
-import java.util.Optional;
-import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.HashMap;
+import com.skilltrack.backend.repository.TokenRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
+
     private final JwtService jwtService;
     private final UtilisateurRepository utilisateurRepository;
+    private final TokenRepository tokenRepository;
     private final AuthService authService;
 
     // ================= REGISTER =================
@@ -49,7 +54,7 @@ public class AuthController {
                     "token", token
             ));
         } catch (RuntimeException e) {
-            return buildErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
+            return buildErrorResponse(e.getMessage(), HttpStatus.UNAUTHORIZED);
         }
     }
 
@@ -58,11 +63,12 @@ public class AuthController {
     public ResponseEntity<String> verifyEmail(@RequestParam("token") String token) {
         String resultMessage;
         try {
-            resultMessage = authService.verifyEmail(token);
+            resultMessage = authService.verifyEmail(token); // vérifie et active l'utilisateur
         } catch (RuntimeException e) {
             resultMessage = e.getMessage();
         }
 
+        // Retour HTML simple avec un lien vers React login
         return ResponseEntity.ok()
                 .header("Content-Type", "text/html; charset=UTF-8")
                 .body("<!DOCTYPE html><html><body style='font-family:sans-serif;text-align:center;margin-top:50px;'>"
@@ -80,40 +86,22 @@ public class AuthController {
         }
 
         String token = authHeader.substring(7);
-        try {
-            authService.logout(token);
-            return ResponseEntity.ok(Map.of(
-                    "status", 200,
-                    "timestamp", LocalDateTime.now(),
-                    "message", "Déconnexion réussie"
-            ));
-        } catch (RuntimeException e) {
-            return buildErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
-        }
-    }
 
-    // ================= PROFILE =================
-    @GetMapping("/profile")
-    public ResponseEntity<?> getProfile(@RequestHeader("Authorization") String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return buildErrorResponse("Token manquant ou mal formé", HttpStatus.BAD_REQUEST);
+        // Vérifier si le token existe et est valide
+        Optional<Token> storedTokenOpt = tokenRepository.findByToken(token);
+        if (storedTokenOpt.isEmpty() || storedTokenOpt.get().isUsed()
+                || storedTokenOpt.get().getExpiration().isBefore(LocalDateTime.now())) {
+            return buildErrorResponse("Token invalide ou expiré", HttpStatus.UNAUTHORIZED);
         }
 
-        String token = authHeader.substring(7);
-        String email;
-        try {
-            email = jwtService.extractEmail(token);
-        } catch (Exception e) {
-            return buildErrorResponse("Token invalide", HttpStatus.UNAUTHORIZED);
-        }
+        // Invalider le token
+        authService.logout(token); // doit marquer le token comme utilisé dans DB
 
-        Optional<Utilisateur> utilisateurOpt = utilisateurRepository.findByEmail(email);
-
-        if (utilisateurOpt.isPresent()) {
-            return ResponseEntity.ok(utilisateurOpt.get());
-        } else {
-            return buildErrorResponse("Utilisateur non trouvé", HttpStatus.NOT_FOUND);
-        }
+        return ResponseEntity.ok(Map.of(
+                "status", 200,
+                "timestamp", LocalDateTime.now(),
+                "message", "Déconnexion réussie"
+        ));
     }
 
     // ================= UTIL =================
