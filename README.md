@@ -94,19 +94,6 @@ L’utilisateur clique sur le lien pour activer son compte
 
 Idem pour la suppression du compte
 
-📡 API Endpoints
-Authentification
-Méthode	Endpoint	Description
-POST	/auth/register	Inscription
-GET	/auth/verify-email?token=...	Vérification e-mail
-POST	/auth/login	Connexion
-POST	/auth/logout	Déconnexion
-Profil utilisateur
-Méthode	Endpoint	Description
-GET	/user/profile	Récupérer le profil
-PUT	/user/profile	Modifier le profil
-POST	/user/delete-request	Demander suppression du compte
-GET	/user/confirm-delete?token=...	Confirmer suppression
 
 🧪 Tests
 
@@ -130,7 +117,6 @@ Confirmation e-mail
 👨‍💻 Auteur
 
 Mohamed Rayane Costo
-Étudiant Ingénieur Informatique & Réseaux
 
 
 
